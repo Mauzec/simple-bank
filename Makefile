@@ -21,3 +21,11 @@ migratedown:
 .PHONY: sqlc
 sqlc:
 	sqlc generate
+
+.PHONY: test
+test:
+	@if command -v gotestsum > /dev/null; then \
+		gotestsum --format testname; \
+	else \
+		go test ./...; \
+	fi
