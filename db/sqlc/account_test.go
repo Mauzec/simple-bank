@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/big"
 	"testing"
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/mauzec/simple-bank/db/util"
 	"github.com/stretchr/testify/assert"
 )
@@ -87,16 +89,18 @@ func TestUpdateAccount(t *testing.T) {
 	})
 
 	t.Run("Updating Account", func(t *testing.T) {
+
+		// assert.NoError(t, err)
 		wantArgs := UpdateAccountParams{
 			ID:      account.ID,
-			Balance: 2077,
+			Balance: pgtype.Numeric{Int: big.NewInt(2077), Valid: true},
 		}
 
 		newAccount, err := testQueries.UpdateAccount(context.Background(), wantArgs)
 		if !assert.NoError(t, err) {
 			log.Fatal(
 				fmt.Errorf(
-					"Unable to update account with id=%d, newBalance=%d \n %+v ", wantArgs.ID, wantArgs.Balance, err),
+					"Unable to update account with id=%d, newBalance=%+v \n %+v ", wantArgs.ID, wantArgs.Balance, err),
 			)
 		}
 		if !assert.NotEmpty(t, newAccount) {

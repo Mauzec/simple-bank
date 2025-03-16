@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const (
@@ -14,17 +14,18 @@ const (
 )
 
 var testQueries *Queries
+var testDB *pgxpool.Pool // using pool to concurrently run multiple transactions
 
 func TestMain(m *testing.M) {
 	ctx := context.Background()
-
-	conn, err := pgx.Connect(ctx, dbSource)
+	var err error
+	testDB, err = pgxpool.New(ctx, dbSource)
 	if err != nil {
 		log.Fatal("unable to connect to database", err)
 	}
-	defer conn.Close(ctx)
+	defer testDB.Close()
 
-	testQueries = New(conn)
+	testQueries = New(testDB)
 
 	os.Exit(m.Run())
 }

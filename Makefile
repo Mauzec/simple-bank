@@ -8,7 +8,7 @@ createdb:
 
 .PHONY: dropdb
 dropdb:
-	docker exece -it postgres dropdb simple_bank
+	docker exec -it postgres dropdb simple_bank
 
 .PHONY: migrateup
 migrateup: 
@@ -25,7 +25,7 @@ sqlc:
 .PHONY: test
 test:
 	@if command -v gotestsum > /dev/null; then \
-		gotestsum --format testname; \
+		gotestsum --debug --format testname; \
 	else \
 		go test ./...; \
 	fi
