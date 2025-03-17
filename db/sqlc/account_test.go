@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math/big"
 	"testing"
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/mauzec/simple-bank/db/util"
 	"github.com/stretchr/testify/assert"
 )
@@ -93,7 +91,7 @@ func TestUpdateAccount(t *testing.T) {
 		// assert.NoError(t, err)
 		wantArgs := UpdateAccountParams{
 			ID:      account.ID,
-			Balance: pgtype.Numeric{Int: big.NewInt(2077), Valid: true},
+			Balance: 2077,
 		}
 
 		newAccount, err := testQueries.UpdateAccount(context.Background(), wantArgs)

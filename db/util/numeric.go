@@ -1,3 +1,5 @@
+// UNUSED OPERATIONS NOW
+
 package util
 
 import (

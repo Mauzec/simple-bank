@@ -4,20 +4,14 @@ import (
 	"math/rand"
 	"strings"
 	"time"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func RandomOwner() string {
 	return RandomString(5)
 }
 
-func RandomBalance() pgtype.Numeric {
-	n, err := Float64ToNumeric(RandomFloat(0, 10000))
-	if err != nil {
-		panic(err)
-	}
-	return n
+func RandomBalance() float64 {
+	return RandomFloat(0, 10000)
 }
 
 func RandomCurrency() string {

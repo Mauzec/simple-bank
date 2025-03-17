@@ -5,9 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/mauzec/simple-bank/db/util"
 )
 
 // Store provides all functions to execute db queries individually,
@@ -46,6 +44,10 @@ func (store *Store) execTx(ctx context.Context, f func(*Queries) error) error {
 	return tx.Commit(ctx)
 }
 
+type txCtxKey string
+
+const txKey txCtxKey = "txName"
+
 // TransferTx create a transfer record to do a money transfer between two accounts.
 // It create a new row in the transfer table, add two records in the entries table, and
 // update the accounts' balance within a single database transaction.
@@ -55,23 +57,22 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 	err := store.execTx(ctx, func(q *Queries) error {
 		var err error
 
+		txName := ctx.Value(txKey)
+
+		fmt.Println(txName, ": create transfer")
 		result.Transfer, err = q.CreateTransfer(ctx, CreateTransferParams(arg))
 		if err != nil {
 			return err
 		}
-
-		fromEntryAmount, err := util.ChangeSignNumeric(&arg.Amount)
-		if err != nil {
-			return err
-		}
+		fmt.Println(txName, ": create fromentry")
 		result.FromEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.FromAccountID,
-			Amount:    fromEntryAmount,
+			Amount:    -arg.Amount,
 		})
 		if err != nil {
 			return err
 		}
-
+		fmt.Println(txName, ": create toentry")
 		result.ToEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.ToAccountID,
 			Amount:    arg.Amount,
@@ -80,11 +81,24 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 			return err
 		}
 
-		// TODO: update account's balance
-		// result.FromAccount, err := q.UpdateAccount(ctx, UpdateAccountParams{
-		// 	ID: arg.FromAccountID,
-		// 	Balance: ,
-		// })
+		// update accounts' balance
+		fmt.Println(txName, ": update balance for acc1")
+		result.FromAccount, err = q.AddBalanceAccount(ctx, AddBalanceAccountParams{
+			ID:     arg.FromAccountID,
+			Amount: -arg.Amount,
+		})
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(txName, ": update balance for acc2")
+		result.ToAccount, err = q.AddBalanceAccount(ctx, AddBalanceAccountParams{
+			ID:     arg.ToAccountID,
+			Amount: arg.Amount,
+		})
+		if err != nil {
+			return err
+		}
 
 		return nil
 	})
@@ -93,9 +107,9 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 }
 
 type TransferTxParams struct {
-	FromAccountID int64          `json:"from_account_id"`
-	ToAccountID   int64          `json:"to_account_id"`
-	Amount        pgtype.Numeric `json:"amount"`
+	FromAccountID int64   `json:"from_account_id"`
+	ToAccountID   int64   `json:"to_account_id"`
+	Amount        float64 `json:"amount"`
 }
 
 type TransferTxResult struct {

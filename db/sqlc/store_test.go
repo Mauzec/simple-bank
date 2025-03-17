@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/mauzec/simple-bank/db/util"
@@ -13,9 +14,7 @@ func TestTransferTx(t *testing.T) {
 
 	account1 := createAndTestRandomAccount(t)
 	account2 := createAndTestRandomAccount(t)
-	amountFloat := float64(15)
-	amount, err := util.Float64ToNumeric(amountFloat)
-	assert.NoError(t, err)
+	amount := float64(15)
 
 	// let check concurrency transfering
 
@@ -23,10 +22,14 @@ func TestTransferTx(t *testing.T) {
 	results := make(chan TransferTxResult)
 
 	n := 5
-	for range n {
+	for i := range n {
+		name := fmt.Sprintf("tx: go %d", i+1)
+
 		go func() {
+			ctx := context.WithValue(context.Background(), txKey, name)
+
 			// fmt.Printf("%d: Start transfer transaction\n", i)
-			result, err := store.TransferTx(context.Background(), TransferTxParams{
+			result, err := store.TransferTx(ctx, TransferTxParams{
 				FromAccountID: account1.ID,
 				ToAccountID:   account2.ID,
 				Amount:        amount,
@@ -86,22 +89,23 @@ func TestTransferTx(t *testing.T) {
 		assert.NotEmpty(t, fromAccount)
 		assert.NotEmpty(t, toAccount)
 
-		_, d1, err := util.AddNumToNum(&account1.Balance, &fromAccount.Balance, -1)
-		assert.NoError(t, err)
-		_, d2, err := util.AddNumToNum(&toAccount.Balance, &account2.Balance, -1)
+		d1 := account1.Balance - fromAccount.Balance
+		d2 := toAccount.Balance - account2.Balance
 		assert.NoError(t, err)
 		assert.True(t, d1 > 0)
 		assert.Equal(t, d1, d2)
 
 		// want: equal(t, i * amount, i * amount), where i is number of accounts'
 		// updates within concurrent running transaction
-		assert.True(t, util.IsInt(d1/amountFloat))
+		assert.True(t, util.IsInt(d1/amount))
 
 		// to ensure that all goroutines do their job right
-		xnometer := int(d1 / amountFloat)
+		xnometer := int(d1 / amount)
+		// fmt.Println(xnometer)
 		assert.True(t, xnometer >= 1 && xnometer <= n)
 		assert.Equal(t, false, xs[xnometer-1])
-		xs[xnometer] = true
+		xs[xnometer-1] = true
+		// fmt.Println(xs[xnometer])
 	}
 
 	updAcc1, err := store.GetAccount(context.Background(), account1.ID)
@@ -109,10 +113,8 @@ func TestTransferTx(t *testing.T) {
 	updAcc2, err := store.GetAccount(context.Background(), account2.ID)
 	assert.NoError(t, err)
 
-	expectAcc1Balance, _, err := util.AddNumToNum(account1.Balance, float64(n)*amountFloat, -1)
-	assert.NoError(t, err)
-	expectAcc2Balance, _, err := util.AddNumToNum(account2.Balance, float64(n)*amountFloat)
-	assert.NoError(t, err)
+	expectAcc1Balance := account1.Balance - float64(n)*amount
+	expectAcc2Balance := account2.Balance + float64(n)*amount
 
 	assert.Equal(t, expectAcc1Balance, updAcc1.Balance)
 	assert.Equal(t, expectAcc2Balance, updAcc2.Balance)
