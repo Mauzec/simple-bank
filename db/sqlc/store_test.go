@@ -2,12 +2,69 @@ package db
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"testing"
 
 	"github.com/mauzec/simple-bank/db/util"
 	"github.com/stretchr/testify/assert"
 )
+
+// TestTransferTxDeadlock tests only deadlock situation without
+// checking account balance actually changes (TestTransferTx check this already)
+func TestTransferTxDeadlock(t *testing.T) {
+	store := NewStore(testDB)
+	account1 := createAndTestRandomAccount(t)
+	account2 := createAndTestRandomAccount(t)
+
+	log.Printf("created account1{balance:%f}, account2{balance:%f}\n",
+		account1.Balance, account2.Balance)
+
+	// FIXME: For some numbers this test can fail in the end
+	// when checking equal of balances:
+	// for example: u can see 74.9999999999099909999 != 75, or
+	// 85.8094423544661245 != 85;809442304125643,
+	// because of float64 nature.
+	//
+	// Realize decimal type for balances then!!
+	amount := float64(10)
+
+	n := 10 // 5x acc1->acc2 and 5x acc2->acc1
+	errs := make(chan error)
+	for i := range n {
+		fromAccID := account1.ID
+		toAccID := account2.ID
+
+		if i%2 != 0 {
+			fromAccID = account2.ID
+			toAccID = account1.ID
+		}
+
+		go func() {
+			_, err := store.TransferTx(context.Background(), TransferTxParams{
+				fromAccID,
+				toAccID,
+				amount,
+			})
+			errs <- err
+		}()
+	}
+
+	for range n {
+		err := <-errs
+		assert.NoError(t, err)
+	}
+
+	updAcc1, err := store.GetAccount(context.Background(), account1.ID)
+	assert.NoError(t, err)
+	updAcc2, err := store.GetAccount(context.Background(), account2.ID)
+	assert.NoError(t, err)
+
+	log.Printf("got updAcc1{balance:%f}, updAcc2{balance:%f}\n",
+		updAcc1.Balance, updAcc2.Balance)
+
+	assert.Equal(t, account1.Balance, updAcc1.Balance)
+	assert.Equal(t, account2.Balance, updAcc2.Balance)
+}
 
 func TestTransferTx(t *testing.T) {
 	store := NewStore(testDB)
@@ -22,12 +79,12 @@ func TestTransferTx(t *testing.T) {
 	results := make(chan TransferTxResult)
 
 	n := 5
-	for i := range n {
-		name := fmt.Sprintf("tx: go %d", i+1)
+	for range n {
+		// name := fmt.Sprintf("tx: go %d", i+1)
 
 		go func() {
-			ctx := context.WithValue(context.Background(), txKey, name)
-
+			// ctx := context.WithValue(context.Background(), txKey, name)
+			ctx := context.Background()
 			// fmt.Printf("%d: Start transfer transaction\n", i)
 			result, err := store.TransferTx(ctx, TransferTxParams{
 				FromAccountID: account1.ID,

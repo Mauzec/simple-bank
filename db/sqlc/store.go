@@ -48,6 +48,33 @@ type txCtxKey string
 
 const txKey txCtxKey = "txName"
 
+func AddBalanceFromTo(
+	ctx context.Context,
+	q *Queries,
+	fromAccID int64,
+	toAccID int64,
+	amount1 float64,
+	amount2 float64,
+) (acc1 Account, acc2 Account, err error) {
+	acc1, err = q.AddBalanceAccount(ctx, AddBalanceAccountParams{
+		ID:     fromAccID,
+		Amount: amount1,
+	})
+	if err != nil {
+		return
+	}
+
+	acc2, err = q.AddBalanceAccount(ctx, AddBalanceAccountParams{
+		ID:     toAccID,
+		Amount: amount2,
+	})
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 // TransferTx create a transfer record to do a money transfer between two accounts.
 // It create a new row in the transfer table, add two records in the entries table, and
 // update the accounts' balance within a single database transaction.
@@ -57,14 +84,11 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 	err := store.execTx(ctx, func(q *Queries) error {
 		var err error
 
-		txName := ctx.Value(txKey)
-
-		fmt.Println(txName, ": create transfer")
 		result.Transfer, err = q.CreateTransfer(ctx, CreateTransferParams(arg))
 		if err != nil {
 			return err
 		}
-		fmt.Println(txName, ": create fromentry")
+
 		result.FromEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.FromAccountID,
 			Amount:    -arg.Amount,
@@ -72,7 +96,7 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		if err != nil {
 			return err
 		}
-		fmt.Println(txName, ": create toentry")
+
 		result.ToEntry, err = q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: arg.ToAccountID,
 			Amount:    arg.Amount,
@@ -82,25 +106,25 @@ func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (Trans
 		}
 
 		// update accounts' balance
-		fmt.Println(txName, ": update balance for acc1")
-		result.FromAccount, err = q.AddBalanceAccount(ctx, AddBalanceAccountParams{
-			ID:     arg.FromAccountID,
-			Amount: -arg.Amount,
-		})
-		if err != nil {
-			return err
+
+		// to avoid deadlocks
+		if arg.FromAccountID < arg.ToAccountID {
+			result.FromAccount, result.ToAccount, err = AddBalanceFromTo(ctx, q,
+				arg.FromAccountID,
+				arg.ToAccountID,
+				-arg.Amount,
+				arg.Amount,
+			)
+		} else {
+			result.ToAccount, result.FromAccount, err = AddBalanceFromTo(ctx, q,
+				arg.ToAccountID,
+				arg.FromAccountID,
+				arg.Amount,
+				-arg.Amount,
+			)
 		}
 
-		fmt.Println(txName, ": update balance for acc2")
-		result.ToAccount, err = q.AddBalanceAccount(ctx, AddBalanceAccountParams{
-			ID:     arg.ToAccountID,
-			Amount: arg.Amount,
-		})
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return err
 	})
 
 	return result, err
