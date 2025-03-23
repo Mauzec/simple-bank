@@ -45,7 +45,7 @@ func RandomString(n int) string {
 	const k = len(alphabet)
 
 	for i := 0; i < n; i++ {
-		strb.WriteByte(
+		_ = strb.WriteByte(
 			alphabet[randGen.Intn(k)],
 		)
 	}

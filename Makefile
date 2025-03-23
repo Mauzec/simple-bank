@@ -29,3 +29,7 @@ test:
 	else \
 		go test ./...; \
 	fi
+
+.PHONY: server
+server:
+	go run main.go
