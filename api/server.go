@@ -10,9 +10,7 @@ type Server struct {
 	router *gin.Engine
 }
 
-func (*Server) TODO(ctx *gin.Context) {
-
-}
+func (*Server) TODO(ctx *gin.Context) {}
 
 func NewServer(store *db.Store) *Server {
 	router := gin.Default()
@@ -30,7 +28,6 @@ func NewServer(store *db.Store) *Server {
 func (server *Server) Run(addr string) error {
 	return server.router.Run(addr)
 }
-
 func errorResponse(err error) gin.H {
 	return gin.H{"error": err.Error()}
 }

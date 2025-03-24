@@ -7,19 +7,20 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-)
-
-const (
-	dbSource = "postgresql://root:secret@localhost:5431/simple_bank?sslmode=disable"
+	"github.com/mauzec/simple-bank/config"
 )
 
 var testQueries *Queries
 var testDB *pgxpool.Pool // using pool to concurrently run multiple transactions
 
 func TestMain(m *testing.M) {
+	config, err := config.LoadConfig("app", "env", "../../config")
+	if err != nil {
+		log.Fatal("unable to load config:", err)
+	}
+
 	ctx := context.Background()
-	var err error
-	testDB, err = pgxpool.New(ctx, dbSource)
+	testDB, err = pgxpool.New(ctx, config.DBSource)
 	if err != nil {
 		log.Fatal("unable to connect to database", err)
 	}

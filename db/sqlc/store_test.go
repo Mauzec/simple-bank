@@ -5,7 +5,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/mauzec/simple-bank/db/util"
+	"github.com/mauzec/simple-bank/util"
 	"github.com/stretchr/testify/assert"
 )
 

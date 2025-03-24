@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/mauzec/simple-bank/db/util"
+	"github.com/mauzec/simple-bank/util"
+
 	"github.com/stretchr/testify/assert"
 )
 
