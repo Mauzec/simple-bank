@@ -30,6 +30,18 @@ test:
 		go test ./...; \
 	fi
 
+.PHONY: testv
+testv:
+	@if command -v gotestsum > /dev/null; then \
+		gotestsum --debug --format standard-verbose; \
+	else \
+		go test -v ./...; \
+	fi
+
 .PHONY: server
 server:
 	go run cmd/server/main.go
+
+.PHONY: mockdb
+mockdb:
+	mockgen -package mockdb -destination db/mock/store.go github.com/mauzec/simple-bank/db/sqlc Store

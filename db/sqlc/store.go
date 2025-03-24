@@ -8,16 +8,18 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Store provides all functions to execute db queries individually,
-// as well as their combinations within a transaction.
-type Store struct {
-	*Queries
-
-	db *pgxpool.Pool
+type Store interface {
+	Querier
+	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
 }
 
-func NewStore(db *pgxpool.Pool) *Store {
-	return &Store{
+type PSQLStore struct {
+	db *pgxpool.Pool
+	*Queries
+}
+
+func NewStore(db *pgxpool.Pool) Store {
+	return &PSQLStore{
 		Queries: New(db),
 		db:      db,
 	}
@@ -26,7 +28,7 @@ func NewStore(db *pgxpool.Pool) *Store {
 // execTx starts a transaction, creates new Queries with this transaction,
 // and executes the function f. If the function returns an error, the transaction is rolled back,
 // else the transaction is committed.
-func (store *Store) execTx(ctx context.Context, f func(*Queries) error) error {
+func (store *PSQLStore) execTx(ctx context.Context, f func(*Queries) error) error {
 	// begin with default transaction options(shortly, just read-commit isolevel)
 	tx, err := store.db.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
@@ -78,7 +80,7 @@ func AddBalanceFromTo(
 // TransferTx create a transfer record to do a money transfer between two accounts.
 // It create a new row in the transfer table, add two records in the entries table, and
 // update the accounts' balance within a single database transaction.
-func (store *Store) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
+func (store *PSQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 
 	err := store.execTx(ctx, func(q *Queries) error {
