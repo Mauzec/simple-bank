@@ -15,7 +15,13 @@ func RandomBalance() float64 {
 }
 
 func RandomCurrency() string {
-	currencies := []string{"EUR", "USD", "RUB", "UAH", "GBP", "BYN", "KZT"}
+	currencies := []string{}
+	for k := range supportedCurrencies {
+		currencies = append(currencies, k)
+	}
+	if len(currencies) == 0 {
+		panic("Where are the currencies?")
+	}
 	max := int64(len(currencies) - 1)
 	idx := RandomInt(0, max)
 	return currencies[idx]
