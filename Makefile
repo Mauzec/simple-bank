@@ -18,6 +18,22 @@ migrateup:
 migratedown:
 	migrate -path db/migrate -database "postgresql://root:secret@localhost:5431/simple_bank?sslmode=disable" -verbose down
 
+.PHONY: migrateup1
+migrateup1: 
+	migrate -path db/migrate -database "postgresql://root:secret@localhost:5431/simple_bank?sslmode=disable" -verbose up 1
+
+.PHONY: migratedown1
+migratedown1:
+	migrate -path db/migrate -database "postgresql://root:secret@localhost:5431/simple_bank?sslmode=disable" -verbose down 1
+
+.PHONY: full_restart
+full_restart:
+	@read -p "Are you sure? This will delete all data. Type 'yes' to continue: " confirm && [ "$$confirm" = "yes" ] && \
+	$(MAKE) dropdb && \
+	$(MAKE) createdb && \
+	$(MAKE) migrateup || \
+	echo "Operation cancelled."
+
 .PHONY: sqlc
 sqlc:
 	sqlc generate
