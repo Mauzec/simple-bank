@@ -40,6 +40,13 @@ func (p *Payload) GetAudience() (jwt.ClaimStrings, error) {
 	return nil, nil
 }
 
+func (payload *Payload) Valid() error {
+	if time.Now().After(payload.ExpiredAt) {
+		return ErrExpiredToken
+	}
+	return nil
+}
+
 func NewPayload(username string, duration time.Duration) (*Payload, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
