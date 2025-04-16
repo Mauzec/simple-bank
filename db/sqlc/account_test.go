@@ -93,6 +93,7 @@ func TestUpdateAccount(t *testing.T) {
 
 		// assert.NoError(t, err)
 		wantArgs := UpdateAccountParams{
+			Owner:   account.Owner,
 			ID:      account.ID,
 			Balance: 2077,
 		}
@@ -144,21 +145,24 @@ func TestDeleteAccount(t *testing.T) {
 }
 
 func TestListAccounts(t *testing.T) {
-	for range 10 {
+	for range 9 {
 		createAndTestRandomAccount(t)
 	}
+	lastAcc := createAndTestRandomAccount(t)
 
 	args := ListAccountsParams{
+		Owner:  lastAcc.Owner,
 		Limit:  5,
-		Offset: 5,
+		Offset: 0,
 	}
 
 	accounts, err := testQueries.ListAccounts(context.Background(), args)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, accounts)
-	assert.Len(t, accounts, 5)
+	assert.Len(t, accounts, 1)
 
 	for _, acc := range accounts {
 		assert.NotEmpty(t, acc)
+		assert.Equal(t, lastAcc.Owner, acc.Owner)
 	}
 }

@@ -18,7 +18,7 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func RandomUser(t *testing.T) (db.User, string) {
+func randomUser(t *testing.T) (db.User, string) {
 	password := util.RandomString(16)
 	hashedPassword, err := util.HashPassword(password)
 	assert.NoError(t, err)
@@ -71,7 +71,7 @@ func assertBodyMatchUser(t *testing.T, body *bytes.Buffer, user db.User) {
 }
 
 func TestCreateUserAPI(t *testing.T) {
-	rndUser, rndPassword := RandomUser(t)
+	rndUser, rndPassword := randomUser(t)
 
 	testCases := []struct {
 		testName      string
@@ -115,7 +115,7 @@ func TestCreateUserAPI(t *testing.T) {
 			store := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(store)
 
-			server := NewServer(store)
+			server := newTestServer(t, store)
 			recorder := httptest.NewRecorder()
 
 			data, err := json.Marshal(tc.bodyReq)

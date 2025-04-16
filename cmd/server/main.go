@@ -8,6 +8,7 @@ import (
 	"github.com/mauzec/simple-bank/api"
 	"github.com/mauzec/simple-bank/config"
 	db "github.com/mauzec/simple-bank/db/sqlc"
+	"github.com/mauzec/simple-bank/token"
 )
 
 // TODO: do restart after changing config
@@ -23,8 +24,26 @@ func main() {
 	}
 	defer conn.Close()
 
+	var tokenMaker token.Maker
+	switch config.TokenType {
+	case "JWTS":
+		tokenMaker, err = token.NewJWTSMaker(config.TokenSymmetricKey)
+	case "PasetoS":
+		tokenMaker, err = token.NewPasetoSMaker(config.TokenSymmetricKey)
+	default:
+		log.Fatal("given unsupported token type")
+	}
+	if err != nil {
+		log.Fatal("something go wrong when creating token maker")
+	}
+
 	store := db.NewStore(conn)
-	server := api.NewServer(store)
+	server, err := api.NewServer(store, tokenMaker, api.TokenParams{
+		AccessTokenDuration: config.AccessTokenDuration,
+	})
+	if err != nil {
+		log.Fatal("server creating err:", err)
+	}
 
 	err = server.Run(config.ServerAddr)
 	if err != nil {
