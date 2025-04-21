@@ -1,6 +1,6 @@
 .PHONY: postgres
 postgres:
-	docker run --name postgres -p 5431:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres
+	docker run --name postgres --network bank-network -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres
 
 .PHONY: createdb
 createdb:
@@ -12,19 +12,19 @@ dropdb:
 
 .PHONY: migrateup
 migrateup: 
-	migrate -path db/migrate -database "postgresql://root:secret@localhost:5431/simple_bank?sslmode=disable" -verbose up
+	migrate -path db/migrate -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up
 
 .PHONY: migratedown
 migratedown:
-	migrate -path db/migrate -database "postgresql://root:secret@localhost:5431/simple_bank?sslmode=disable" -verbose down
+	migrate -path db/migrate -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose down
 
 .PHONY: migrateup1
 migrateup1: 
-	migrate -path db/migrate -database "postgresql://root:secret@localhost:5431/simple_bank?sslmode=disable" -verbose up 1
+	migrate -path db/migrate -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up 1
 
 .PHONY: migratedown1
 migratedown1:
-	migrate -path db/migrate -database "postgresql://root:secret@localhost:5431/simple_bank?sslmode=disable" -verbose down 1
+	migrate -path db/migrate -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose down 1
 
 .PHONY: full_restart
 full_restart:
