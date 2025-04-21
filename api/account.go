@@ -21,9 +21,8 @@ type getAccountRequest struct {
 }
 
 type listAccountsRequest struct {
-	Owner      string `form:"owner" binding:"required"`
-	PageNumber int32  `form:"page_number" binding:"required,min=1"`
-	PageSize   int32  `form:"page_size" binding:"required,min=5,max=30"`
+	PageNumber int32 `form:"page_number" binding:"required,min=1"`
+	PageSize   int32 `form:"page_size" binding:"required,min=5,max=30"`
 }
 
 type deleteAccountRequest struct {
@@ -99,7 +98,7 @@ func (server *Server) listAccounts(ctx *gin.Context) {
 		return
 	}
 
-	authPayload := ctx.MustGet(authPayloadKey).(token.Payload)
+	authPayload := ctx.MustGet(authPayloadKey).(*token.Payload)
 	accounts, err := server.store.ListAccounts(ctx, db.ListAccountsParams{
 		Owner:  authPayload.Username,
 		Limit:  req.PageSize,

@@ -2,11 +2,13 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	db "github.com/mauzec/simple-bank/db/sqlc"
+	"github.com/mauzec/simple-bank/token"
 )
 
 type TransferRequest struct {
@@ -23,8 +25,20 @@ func (server *Server) createTransfer(ctx *gin.Context) {
 		return
 	}
 
-	if !server.matchAccount(ctx, req.FromAccountID, req.Currency) ||
-		!server.matchAccount(ctx, req.ToAccountID, req.Currency) {
+	authPayload := ctx.MustGet(authPayloadKey).(*token.Payload)
+
+	fromAcc, ok := server.validAccount(ctx, req.FromAccountID, req.Currency)
+	if fromAcc.Owner != authPayload.Username {
+		err := errors.New("from account does not belong to you")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+	if !ok {
+		return
+	}
+
+	_, ok = server.validAccount(ctx, req.ToAccountID, req.Currency)
+	if !ok {
 		return
 	}
 
@@ -41,23 +55,24 @@ func (server *Server) createTransfer(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, transferResult)
 }
 
-func (server *Server) matchAccount(ctx *gin.Context, accountID int64, wantCurrency string) bool {
+func (server *Server) validAccount(ctx *gin.Context, accountID int64, wantCurrency string) (db.Account, bool) {
 	account, err := server.store.GetAccount(ctx, accountID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return false
+			return db.Account{}, false
 		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return false
+		return db.Account{}, false
 	}
 
 	if wantCurrency == account.Currency {
-		return true
+		return account, true
+
 	}
 
 	ctx.JSON(http.StatusBadRequest, errorResponse(
 		fmt.Errorf("account [%d] currency does not match. Want:%s, Got:%s", account.ID, wantCurrency, account.Currency),
 	))
-	return false
+	return db.Account{}, false
 }

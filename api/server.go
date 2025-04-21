@@ -53,7 +53,7 @@ func (server *Server) setupRouter() {
 
 	// dangerous single quries
 	// ONLY FOR ADMINS
-	// TODO:
+	// TODO: craete roles
 	authRoutes.PUT("/accounts", server.updateAccount)        // updateAccount
 	authRoutes.DELETE("/accounts/:id", server.deleteAccount) // deleteAccount
 
