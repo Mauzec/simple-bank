@@ -1,0 +1,19 @@
+name: Deploy to prod
+
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: raisultan/ycr-push@main
+        env:
+          KEY_JSON: ${{ secrets.KEY_JSON }}
+          REGISTRY_ID: ${{ secrets.REGISTRY_ID }}
+          DOCKERFILE_PATH: ../../Dockerfile
+          IMAGE_NAME: simplebank
+          IMAGE_TAG: debug
