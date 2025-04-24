@@ -1,12 +1,13 @@
 services:
   postgres:
-    image: postgres:17.4-alpine3.21
+    image: ${REGISTRY}/postgres:debug
     environment:
       - POSTGRES_USER=root
       - POSTGRES_PASSWORD=secret
       - POSTGRES_DB=simple_bank
   
   api:
+    image: ${REGISTRY}/simplebank:debug
     build:
       context: .
       dockerfile: Dockerfile

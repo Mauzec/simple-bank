@@ -21,5 +21,5 @@ COPY ./config/app.env ./config/app.env
 COPY start.sh .
 COPY wait-for.sh .
 EXPOSE 8080
-CMD ["/app/main"]
 ENTRYPOINT ["/app/start.sh"]
+CMD ["/app/main"]
