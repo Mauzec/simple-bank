@@ -23,13 +23,12 @@ jobs:
 
       - name: Login to YCR
         run: |
-          echo "${{ secrets.KEY_JSON }}" | \
-            docker login --username oauth --password-stdin ${{ env.YC_REGISTRY }}
+          echo ${{ secrets.YC_TOKEN }} | docker login --username oauth --password-stdin ${{ env.YC_REGISTRY }}
       
       - name: Build & Push with Docker Compose
         run: |
           docker compose build
           docker compose push
         env:
-          REGISTRY: ${{ env.REGISTRY }}
+          REGISTRY: ${{ env.YC_REGISTRY }}
       
