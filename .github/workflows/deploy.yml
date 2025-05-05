@@ -9,10 +9,33 @@ jobs:
   build:
     name: build image
     runs-on: ubuntu-latest
+    env:
+      DB_SOURCE: ${{ secrets.DB_SOURCE }}
+      TOKEN_SYMMETRIС_KEY: ${{ secrets.TOKEN_SYMMETRIС_KEY }}
+      TOKEN_TYPE: ${{ secrets.TOKEN_TYPE }}
+      ACCESS_TOKEN_DURATION: ${{ secrets.ACCESS_TOKEN_DURATION }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+
+      - name: Generate app.env
+        run: |
+          cat > ./config/app.env <<EOF
+          DB_SOURCE=${DB_SOURCE}
+          SERVER_ADDR=0.0.0.0:8080
+
+          TOKEN_TYPE=${TOKEN_TYPE}
+          TOKEN_SYMMETRIC_KEY=${TOKEN_SYMMETRIC_KEY}
+          ACCESS_TOKEN_DURATION=${TOKEN_SYMMETRIC_KEY}
+
+          POSTGRES_USER=${POSTGRES_USER}
+          POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+          EOF
+      - run: wc -l ./config/app.env
+
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4 # More information on this action can be found below in the 'AWS Credentials' section

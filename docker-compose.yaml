@@ -1,22 +1,21 @@
 services:
   postgres:
-    image: ${REGISTRY}/postgres:debug
+    image: postgres:17.4-alpine3.21
     environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=secret
-      - POSTGRES_DB=simple_bank
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
   
   api:
-    image: ${REGISTRY}/simplebank:debug
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
     environment:
-      - DB_SOURCE=postgresql://root:secret@postgres:5432/simple_bank?sslmode=disable
+      - DB_SOURCE=${DB_SOURCE}
       - GIN_MODE=release
     depends_on:
       - postgres
-    entrypoint: ["/app/wait-for.sh", "postgres:5432", "--", "/app/start.sh"]
+    entrypoint: ["/app/wait-for.sh", "postgres:${DB_PORT}", "--", "/app/start.sh"]
     command: ["/app/main"]

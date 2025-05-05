@@ -34,7 +34,7 @@ func main() {
 		log.Fatal("given unsupported token type")
 	}
 	if err != nil {
-		log.Fatal("something go wrong when creating token maker")
+		log.Fatal("something go wrong when creating token maker:", err)
 	}
 
 	store := db.NewStore(conn)
