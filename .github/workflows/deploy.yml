@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DB_SOURCE: ${{ secrets.DB_SOURCE }}
-      TOKEN_SYMMETRIС_KEY: ${{ secrets.TOKEN_SYMMETRIС_KEY }}
+      TOKEN_SYMMETRIC_KEY: ${{ secrets.TOKEN_SYMMETRIC_KEY }}
       TOKEN_TYPE: ${{ secrets.TOKEN_TYPE }}
       ACCESS_TOKEN_DURATION: ${{ secrets.ACCESS_TOKEN_DURATION }}
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
