@@ -168,6 +168,7 @@ func (server *Server) updateAccount(ctx *gin.Context) {
 	}
 
 	account, err := server.store.UpdateAccount(ctx, db.UpdateAccountParams{
+		Owner:   authPayload.Username,
 		ID:      req.ID,
 		Balance: req.Balance,
 	})
