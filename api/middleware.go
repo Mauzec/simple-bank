@@ -19,7 +19,10 @@ const (
 
 func authMiddleware(tokenMaker token.Maker) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		authHeader := ctx.GetHeader(authHeaderKey)
+		authHeader := ctx.GetHeader("Authorization")
+		if len(authHeader) == 0 {
+			authHeader = ctx.GetHeader(authHeaderKey)
+		}
 		if len(authHeader) == 0 {
 			err := errors.New("auth header is not provided")
 			ctx.AbortWithStatusJSON(
