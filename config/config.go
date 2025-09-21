@@ -26,6 +26,11 @@ func LoadConfig(name, ext string, paths ...string) (Config, error) {
 	viper.SetConfigType(ext)
 
 	viper.AutomaticEnv()
+	_ = viper.BindEnv("DB_SOURCE")
+	_ = viper.BindEnv("SERVER_ADDR")
+	_ = viper.BindEnv("TOKEN_TYPE")
+	_ = viper.BindEnv("TOKEN_SYMMETRIC_KEY")
+	_ = viper.BindEnv("ACCESS_TOKEN_DURATION")
 	err := viper.ReadInConfig()
 	config := Config{}
 
