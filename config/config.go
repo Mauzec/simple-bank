@@ -30,7 +30,9 @@ func LoadConfig(name, ext string, paths ...string) (Config, error) {
 	config := Config{}
 
 	if err != nil {
-		return config, err
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return config, err
+		}
 	}
 
 	err = viper.Unmarshal(&config)

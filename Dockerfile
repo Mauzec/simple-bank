@@ -13,11 +13,11 @@ RUN mkdir -p /tmp/migrate_download \
 
 FROM alpine:3.21
 WORKDIR /app
+RUN apk add --no-cache netcat-openbsd
 COPY --from=builder /app/main .
 COPY --from=builder /app/migrate_bin /usr/bin/migrate
 RUN rm -rf /app/migrate_bin
 COPY db/migrate ./migrate
-COPY ./config/app.env ./config/app.env
 COPY start.sh .
 COPY wait-for.sh .
 EXPOSE 8080

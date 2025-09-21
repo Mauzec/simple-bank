@@ -29,7 +29,7 @@ func (p *Payload) GetNotBefore() (*jwt.NumericDate, error) {
 }
 
 func (p *Payload) GetIssuer() (string, error) {
-	return "Mauzec", nil
+	return "fill_me", nil
 }
 
 func (p *Payload) GetSubject() (string, error) {

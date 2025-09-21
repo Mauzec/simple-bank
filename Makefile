@@ -35,25 +35,25 @@ dropdb:
 .PHONY: migrateup
 migrateup: 
 	migrate -path db/migrate \
-	-database postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:$(DB_PORT)/$(DB_NAME)$(SSL_ENABLE) \
+	-database postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_URI):$(DB_PORT)/$(DB_NAME)$(SSL_ENABLE) \
 	-verbose up
 
 .PHONY: migratedown
 migratedown:
 	migrate -path db/migrate \
-	-database postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:$(DB_PORT)/$(DB_NAME)$(SSL_ENABLE) \
+	-database postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_URI):$(DB_PORT)/$(DB_NAME)$(SSL_ENABLE) \
 	-verbose down
 
 .PHONY: migrateup1
 migrateup1: 
 	migrate -path db/migrate \
-	-database postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:$(DB_PORT)/$(DB_NAME)$(SSL_ENABLE) \
+	-database postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_URI):$(DB_PORT)/$(DB_NAME)$(SSL_ENABLE) \
 	-verbose up 1
 
 .PHONY: migratedown1
 migratedown1:
 	migrate -path db/migrate \
-	-database postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:$(DB_PORT)/$(DB_NAME)$(SSL_ENABLE) \
+	-database postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_URI):$(DB_PORT)/$(DB_NAME)$(SSL_ENABLE) \
 	-verbose down 1
 
 .PHONY: full_restart
