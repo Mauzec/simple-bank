@@ -1,0 +1,62 @@
+name: deploy to prod
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+    name: build image
+    runs-on: ubuntu-latest
+    env:
+      DB_SOURCE: ${{ secrets.DB_SOURCE }}
+      TOKEN_SYMMETRIC_KEY: ${{ secrets.TOKEN_SYMMETRIC_KEY }}
+      TOKEN_TYPE: ${{ secrets.TOKEN_TYPE }}
+      ACCESS_TOKEN_DURATION: ${{ secrets.ACCESS_TOKEN_DURATION }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Generate app.env
+        run: |
+          cat > ./config/app.env <<EOF
+          DB_SOURCE=${DB_SOURCE}
+          SERVER_ADDR=0.0.0.0:8080
+
+          TOKEN_TYPE=${TOKEN_TYPE}
+          TOKEN_SYMMETRIC_KEY=${TOKEN_SYMMETRIC_KEY}
+          ACCESS_TOKEN_DURATION=${TOKEN_SYMMETRIC_KEY}
+
+          POSTGRES_USER=${POSTGRES_USER}
+          POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+          EOF
+      - run: wc -l ./config/app.env
+
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4 # More information on this action can be found below in the 'AWS Credentials' section
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+
+      - name: Login to Amazon ECR Public
+        id: login-ecr-public
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
+
+      - name: Build, tag, and push docker image to Amazon ECR Public
+        env:
+          REGISTRY: ${{ steps.login-ecr-public.outputs.registry }}
+          REGISTRY_ALIAS: i7b7k8e8
+          REPOSITORY: simplebank
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REGISTRY_ALIAS/$REPOSITORY:$IMAGE_TAG
