@@ -1,0 +1,80 @@
+name: deploy to prod
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+    name: build image
+    runs-on: ubuntu-latest
+    env:
+      DB_SOURCE: ${{ secrets.DB_SOURCE }}
+      TOKEN_SYMMETRIC_KEY: ${{ secrets.TOKEN_SYMMETRIC_KEY }}
+      TOKEN_TYPE: ${{ secrets.TOKEN_TYPE }}
+      ACCESS_TOKEN_DURATION: ${{ secrets.ACCESS_TOKEN_DURATION }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Generate app.env
+        run: |
+          cat > ./config/app.env <<EOF
+          DB_SOURCE=${DB_SOURCE}
+          SERVER_ADDR=0.0.0.0:8080
+
+          TOKEN_TYPE=${TOKEN_TYPE}
+          TOKEN_SYMMETRIC_KEY=${TOKEN_SYMMETRIC_KEY}
+          ACCESS_TOKEN_DURATION=${TOKEN_SYMMETRIC_KEY}
+
+          POSTGRES_USER=${POSTGRES_USER}
+          POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+          EOF
+
+      - run: wc -l ./config/app.env
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Evolution Artifact Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.CR_URI }}
+          username: ${{ secrets.EVO_CR_LOGIN }}
+          password: ${{ secrets.EVO_CR_PWD }}
+
+      - name: .NET - Build and push docker image to Evolution Aritfact Registry
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ${{ env.CR_URI }}/evo-restapidotnet:${{ github.sha }}
+          file: ./restapi-dotnet/src/Dockerfile
+          context: ./restapi-dotnet/src
+          
+      - name: NodeJS - Build and push docker image to Evolution Aritfact Registry
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ${{ env.CR_URI }}/evo-restapinodejs:${{ github.sha }}
+          file: ./restapi-nodejs/src/Dockerfile
+          context: ./restapi-nodejs/src
+          
+      - name: Python - Build and push docker image to Evolution Aritfact Registry
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ${{ env.CR_URI }}/evo-restapipython:${{ github.sha }}
+          file: ./restapi-python/src/Dockerfile
+          context: ./restapi-python/src
+
+      - name: Go - Build and push docker image to Evolution Aritfact Registry
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ${{ env.CR_URI }}/evo-restapigo:${{ github.sha }}
+          file: ./restapi-go/src/Dockerfile
+          context: ./restapi-go/src
